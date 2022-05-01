@@ -27,7 +27,7 @@ book_data = {
 
 for i,j in book_data.items():
     print(i,': ',j)
-with open('book_test.csv', 'w', newline='') as csvfile:
+with open('../book_test.csv', 'w', newline='') as csvfile:
     dict_writer = csv.DictWriter(csvfile,fieldnames=book_data, dialect = csv.excel)
                                  
     dict_writer.writeheader()
