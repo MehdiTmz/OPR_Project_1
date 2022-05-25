@@ -21,21 +21,32 @@ def download_image(url,name):
     urllib2.urlretrieve(url,'image/'+s);s
     #print('Image Dowloaded succesfully');
 
+
 def bookDataRetrieve(quote_page,root_url):
+    
     page = urllib2.urlopen(quote_page);
     soup = BeautifulSoup(page, 'html.parser');
 
+    #retrieve path of the picture
     img_link = soup.find('img')['src'];
     img_link = img_link[6:];
     img_link = root_url + img_link;
-
+    # Keep only the digit for the stock available.
+    availableTxt = soup.findAll('td')[5].get_text();
+    stock = [];
+    for s in availableTxt.split('('):
+        for t in s:
+            if(t.isdigit()== True):
+                stock.append(t)
+    
+    #Dictionnary where we stock all the data needed for a book.
     book_data = {
         'product_page': quote_page,
         'universal_product_code': soup.findAll('td')[0].get_text(),
         'title': soup.find('h1').get_text(),
         'price_including_tax': soup.findAll('td')[2].get_text(),
         'price_excluding_tax': soup.findAll('td')[3].get_text(),
-        'number_available':soup.findAll('td')[5].get_text(),
+        'number_available':"".join(stock),
         'product_description':soup.findAll("p")[3].get_text(),
         'category':soup.findAll('a')[3].get_text(),
         'review_rating':soup.findAll('td')[6].get_text(),
@@ -44,6 +55,9 @@ def bookDataRetrieve(quote_page,root_url):
 
     download_image(img_link,book_data['title']);
     
+    
+    
+    print('All the data from '+ book_data['title'] + ' have been retrieved.')
     return book_data;
     
 def categoryDataRetreiver(quote_page,root_url,quote_page_cat_root):
@@ -91,22 +105,26 @@ def URLcategoryfunction(soup):
 ####### Script  ##########
 
 root_url = 'http://books.toscrape.com/';
-quote_page = 'http://books.toscrape.com/catalogue/full-moon-over-noahs-ark-an-odyssey-to-mount-ararat-and-beyond_811/index.html';
-quote_page2 = 'http://books.toscrape.com/catalogue/category/books/travel_2/index.html';
-quote_page_cat_root = 'http://books.toscrape.com/catalogue/category/books/travel_2/';
+#quote_page = 'http://books.toscrape.com/catalogue/full-moon-over-noahs-ark-an-odyssey-to-mount-ararat-and-beyond_811/index.html';
+#quote_page2 = 'http://books.toscrape.com/catalogue/category/books/travel_2/index.html';
+#quote_page_cat_root = 'http://books.toscrape.com/catalogue/category/books/travel_2/';
 
 page = urllib2.urlopen(root_url);
 soup = BeautifulSoup(page, 'html.parser');
 
-print('hello')
 url_cat_list, root_url_cat_list, cat_txt = URLcategoryfunction(soup);
+if not os.path.exists('book'):
+    os.makedirs('book');
 
 for x in url_cat_list:
     print('Currently working in the following link : ',root_url + x)
-    csv_header = ['product_page','universal_product_code','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url'];
+    csv_header = ['product_page','universal_product_code',
+                  'title','price_including_tax','price_excluding_tax',
+                  'number_available','product_description',
+                  'category','review_rating','image_url'];
     cat_name = cat_txt[url_cat_list.index(x)].replace('\n','').replace(' ',"");
     
-    with open('book'+ cat_name +'.csv', 'w',encoding="utf-8", newline='') as csvfile:
+    with open('./book/'+ cat_name +'.csv', 'w',encoding="utf-8", newline='') as csvfile:
         dict_writer = csv.DictWriter(csvfile,fieldnames=csv_header, dialect = csv.excel)                         
         dict_writer.writeheader()                
         
